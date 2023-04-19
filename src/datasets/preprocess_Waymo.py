@@ -6,9 +6,10 @@ from tqdm import tqdm
 from waymo_open_dataset import dataset_pb2 as open_dataset
 from waymo_open_dataset.utils import frame_utils
 # from waymo_open_dataset import label_pb2 as open_label
+#import dataset_pb2 as open_dataset
 import imageio
-import tensorflow.compat.v1 as tf
-tf.enable_eager_execution()
+import tensorflow as tf
+tf.compat.v1.enable_eager_execution()
 import pickle
 from collections import defaultdict
 from copy import deepcopy

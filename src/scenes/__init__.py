@@ -137,7 +137,7 @@ class NeuralScene:
             lightfield_config=lightfield_config,
             n_rays_per_image=exp_dict["n_rays"] // exp_dict["image_batch_size"],
             reference_frame='lidar',
-            point_chunk_size=exp_dict.get('point_chunk', 1e12),
+            # point_chunk_size=exp_dict.get('point_chunk', 1e12),
             exp_dict=exp_dict
         )
 
