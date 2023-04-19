@@ -722,7 +722,7 @@ class PointLightFieldSampler(Raysampler):
                                                      scene=scene,
                                                      reference_frame=reference_frame,
                                                      n_rays_per_image=n_rays_per_image,
-                                                     n_pts_object=0,
+                                                    #  n_pts_object=0,
                                                      exp_dict=exp_dict,
                                                      )
         
