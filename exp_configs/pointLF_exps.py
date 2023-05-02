@@ -51,13 +51,16 @@ EXP_GROUPS['pointLF_waymo_local'] = hu.cartesian_exp_group({
     "scenes": [
         # get_scenes(scene_ids=[[0, 8]], dataset='waymo', selected_frames=[135, 197], object_types=['TYPE_VEHICLE']),
         # get_scenes(scene_ids=[[0, 11]], dataset='waymo', selected_frames=[0, 20], object_types=['TYPE_VEHICLE']),
-        get_scenes(scene_ids=[[0, 2]], dataset='waymo', selected_frames=[0, 80], object_types=['TYPE_VEHICLE']),
+        ####
+        # get_scenes(scene_ids=[[0, 2]], dataset='waymo', selected_frames=[0, 80], object_types=['TYPE_VEHICLE']),
+        ####
         # get_scenes(scene_ids=[[0, 2]], dataset='waymo', selected_frames=[0, 197], object_types=['TYPE_VEHICLE']),
         # get_scenes(scene_ids=[[2, 0]], dataset='waymo', selected_frames=[0, 10], object_types=['TYPE_VEHICLE']),
         # get_scenes(scene_ids=[[0, 19]], dataset='waymo', selected_frames=[0, 198], object_types=['TYPE_VEHICLE']),
         # get_scenes(scene_ids=[[0, 19]], dataset='waymo', selected_frames=[96, 198], object_types=['TYPE_VEHICLE']),
         # get_scenes(scene_ids=[[1, 15]], dataset='waymo', selected_frames=[0, 197], object_types=['TYPE_VEHICLE']),
         # get_scenes(scene_ids=[[2, 0]], dataset='waymo', selected_frames=[0, 40], object_types=['TYPE_VEHICLE']),
+        get_scenes(scene_ids=[[0, 1]], dataset='waymo', selected_frames=[0, 80], object_types=['TYPE_VEHICLE']),
     ],
     "precache": [False],
     "lrate": [0.001, ],
@@ -110,7 +113,9 @@ EXP_GROUPS['pointLF_waymo_server'] = hu.cartesian_exp_group({
     "scenes": [
         # get_scenes(scene_ids=[[0, 2]], dataset='waymo', selected_frames=[0, 20], object_types=['TYPE_VEHICLE']),
         # get_scenes(scene_ids=[[0, 2]], dataset='waymo', selected_frames=[0, 40], object_types=['TYPE_VEHICLE']),
-        get_scenes(scene_ids=[[0, 2]], dataset='waymo', selected_frames=[0, 80], object_types=['TYPE_VEHICLE']),
+        ####
+        #get_scenes(scene_ids=[[0, 2]], dataset='waymo', selected_frames=[0, 80], object_types=['TYPE_VEHICLE']),
+        ####
         # get_scenes(scene_ids=[[0, 2]], dataset='waymo', selected_frames=[0, 120], object_types=['TYPE_VEHICLE']),
         # get_scenes(scene_ids=[[0, 2]], dataset='waymo', selected_frames=[0, 197], object_types=['TYPE_VEHICLE']),
         # get_scenes(scene_ids=[[0, 8]], dataset='waymo', selected_frames=[171, 190], object_types=['TYPE_VEHICLE']),
@@ -119,6 +124,7 @@ EXP_GROUPS['pointLF_waymo_server'] = hu.cartesian_exp_group({
         # get_scenes(scene_ids=[[1, 15]], dataset='waymo', selected_frames=[0, 197], object_types=['TYPE_VEHICLE']),
         # get_scenes(scene_ids=[[2, 3]], dataset='waymo', selected_frames=[0, 198], object_types=['TYPE_VEHICLE']),
         # get_scenes(scene_ids=[[2, 9]], dataset='waymo', selected_frames=[0, 197], object_types=['TYPE_VEHICLE']),
+        get_scenes(scene_ids=[[0, 1]], dataset='waymo', selected_frames=[0, 80], object_types=['TYPE_VEHICLE']),
     ],
     "precache": [False],
     "latent_balance": 0.0001,
