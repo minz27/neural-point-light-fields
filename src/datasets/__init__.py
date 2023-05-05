@@ -31,8 +31,11 @@ def get_dataset(datadir, scene_dict, args):
                     datadir_full = sorted([f.path for f in os.scandir(datadir_full) if f.is_dir()])[record_id]
                     break
         # datadir_full = os.path.join(datadir_full, record_dir)
-
-        dataset = Waymo(datadir_full, scene_dict, selected_frames=selected_frames,object_types=scene_dict['object_types'])
+        if args.mask:
+            print("Using masked images...")
+            dataset = Waymo(datadir_full, scene_dict, selected_frames=selected_frames,object_types=scene_dict['object_types'], mask=True)
+        else:    
+            dataset = Waymo(datadir_full, scene_dict, selected_frames=selected_frames,object_types=scene_dict['object_types'])
 
     else:
         raise ValueError("dataset does not exist")

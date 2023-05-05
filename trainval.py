@@ -194,6 +194,7 @@ if __name__ == "__main__":
     parser.add_argument("--epoch_size", type=int, default=100)
     parser.add_argument("--num_workers", type=int, default=0)
     parser.add_argument("--render_only", type=bool, default=False)
+    parser.add_argument("--mask", type=bool, default=False)
     # parser.add_argument(
     #     "--dist_url", default="env://", help="url used to set up distributed training"
     # )
@@ -213,7 +214,10 @@ if __name__ == "__main__":
             python_binary_path += (
                 f" -m torch.distributed.launch --nproc_per_node={args.ngpus} --use_env "
             )
-
+    elif args.ngpus > 1:
+        python_binary_path += (
+            f" -m torch.distributed.launch --nproc_per_node={args.ngpus} --use_env "
+        )
     # utd.init_distributed_mode(args)
     # if args.distributed and not utd.is_main_process():
     #     args.reset = 0

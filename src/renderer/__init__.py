@@ -424,7 +424,10 @@ class PointLightFieldRenderer(nn.Module):
     def compute_loss(self, rgb_out, gt, xycfn, weighted=False, **kwargs):
         y = rgb_out['gt']
         x = rgb_out['rgb'].reshape(y.shape)
-
+        # masked loss
+        mask = y > 0
+        y = y[mask]
+        x = x[mask]
         loss_dict = {}
 
         loss_dict["mse_loss"] = losses.mse_loss(x=x, y=y)
@@ -434,5 +437,9 @@ class PointLightFieldRenderer(nn.Module):
     def compute_psnr(self, pred, gt, rgb_out):
         y = rgb_out['gt']
         x = rgb_out['rgb'].reshape(y.shape)
+        # masked psnr
+        mask = y > 0
+        y = y[mask]
+        x = x[mask]
         psnr = losses.calc_psnr(x=x, y=y)
         return psnr

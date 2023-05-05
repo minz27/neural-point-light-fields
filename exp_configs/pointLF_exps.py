@@ -134,7 +134,7 @@ EXP_GROUPS['pointLF_waymo_server'] = hu.cartesian_exp_group({
                    'n_features': 128,
                    'n_sample_pts': 500,
                    'pointfeat_encoder': 'multiview_attention',
-                   'merge_pcd': True,
+                   'merge_pcd': False,
                    'all_cams': False,
                    'D_lf': 8,
                    'W_lf': 256,

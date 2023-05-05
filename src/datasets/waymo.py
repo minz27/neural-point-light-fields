@@ -27,7 +27,7 @@ waymo2vkitti_transform = np.array([[1., 0., 0., 0.],
 waymo2kitti_type = dict(zip(open_label.Label.Type.values(),[-1,0,4,-1,-1]))
 
 class Waymo:
-    def __init__(self, datadir, scene_dict, selected_frames,object_types=None):
+    def __init__(self, datadir, scene_dict, selected_frames,object_types=None, mask=False):
         USE_PER_CAMERA_VEH_POSE = True
         self.num_cameras = len(open_dataset.CameraName.Name.values())-1
         self.num_lasers = len(open_dataset.LaserName.Name.values()) - 1
@@ -53,6 +53,10 @@ class Waymo:
         self.images = [tracking_info[k]['im_paths'][cam_ind] for cam_ind in
          range(1,len(open_dataset.CameraName.Name.values())) for k in tracking_info.keys()
           ]
+          
+        if mask:
+            self.images = [x.replace("images", "masked_images") for x in self.images]  
+
         self.point_cloud_pth = [tracking_info[k]['pcd_paths'][li_ind] for li_ind in
             range(1, len(open_dataset.LaserName.Name.values())) for k in tracking_info.keys()
         ]
