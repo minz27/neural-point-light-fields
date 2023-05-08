@@ -84,6 +84,21 @@ class Frame:
 
         return img
 
+    def load_masked_image(self, camera_idx, adjust_for_front=False):
+        assert (
+            camera_idx in self.camera_ids
+        ), f"only cameras {self.camera_ids} are available"
+        cam = list(self.nodes["camera"].values())[0]
+        H, W = int(cam.H), int(cam.W)
+        masked_img_path = self.images[camera_idx].replace("images", "masked_images")
+        img_pil = Image.open(masked_img_path)
+        img_pil = img_pil.resize((W, H))
+        img = (np.maximum(np.minimum(np.array(img_pil), 255), 0) / 255.0).astype(
+            np.float32
+        )
+
+        return img     
+
     def load_tone_mapping(self, camea_idx):
         return {'wht_pt': self.wht_pt[camea_idx],
                 'contrast': self.alpha_contrast[camea_idx],

@@ -240,7 +240,7 @@ class NeuralScene:
                 )
 
             images = torch.from_numpy(frame.load_image(camera_idx)).float()
-
+            masked_images = torch.from_numpy(frame.load_masked_image(camera_idx)).float()
             H, W, _ = images.shape
             xycfn = ray_dict["ray_bundle"].xys
 
@@ -249,7 +249,7 @@ class NeuralScene:
             "camera_id": int(camera_idx),
             "meta": meta,
             "images": images,
-            
+            "masked_images": masked_images,
             # "input_dict": input_dict,
             "H": H,
             "W": W,
@@ -758,6 +758,7 @@ def frames_from_dataset(dataset, nodes, n_frames=None, veh_world=False, all_cams
 
     # [n_img] --> [n_cameras, n_frames]
     images = [dataset.images[n_img//n_cameras*i:n_img//n_cameras*(i+1)] for i in range(n_cameras)]
+    masked_images = [dataset.masked_images[n_img//n_cameras*i:n_img//n_cameras*(i+1)] for i in range(n_cameras)]
 
     # [n_pcd] --> [n_lasers, n_frames]
     pcd_path = [dataset.point_cloud_pth[n_pcd // n_lasers * i:n_pcd // n_lasers * (i + 1)] for i in range(n_lasers)]

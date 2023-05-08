@@ -55,7 +55,10 @@ class Waymo:
           ]
           
         if mask:
-            self.images = [x.replace("images", "masked_images") for x in self.images]  
+            self.masked_images = [x.replace("images", "masked_images") for x in self.images]
+            # self.images = [x.replace("images", "masked_images") for x in self.images]  
+        else:
+            self.masked_images = self.images    
 
         self.point_cloud_pth = [tracking_info[k]['pcd_paths'][li_ind] for li_ind in
             range(1, len(open_dataset.LaserName.Name.values())) for k in tracking_info.keys()

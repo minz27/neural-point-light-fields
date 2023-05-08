@@ -153,6 +153,10 @@ class Raysampler:
         #     obj_only = True
         # Get device from trainable components
         device = "cpu"
+        # validation flag
+        val = False
+        if (not intersections_only) & (not random_rays):
+            val = True
 
         # 1. Get full ray bundle
         full_ray_bundle = []
@@ -171,7 +175,7 @@ class Raysampler:
                 cam_nodes[c] = self.cameras[c]
 
             rb = self._get_rays(cameras=cam_nodes, edges=edges2cams, device=device, scene=scene, optimize_cam=scene.recalibrate, EPI=EPI,
-                                epi_row=epi_row)
+                                epi_row=epi_row, val=val)
 
         # get only intersections
         if (
@@ -275,6 +279,7 @@ class Raysampler:
         optimize_cam: bool = False,
         EPI=False,
         epi_row=None,
+        val=False
     ):
 
         origins = []
@@ -355,6 +360,7 @@ class Raysampler:
         # TODO: Change for only a single focal length in camera node
         focal = cam.intrinsics.f_x.to(device)
 
+        # i, j creates indexes i and j over the image
         i, j = torch.meshgrid(
             torch.linspace(0, W - 1, W), torch.linspace(0, H - 1, H)
         )  # pytorch's meshgrid has indexing='ij'
@@ -382,6 +388,11 @@ class Raysampler:
             ],
             -1,
         )
+        # Mask ray directions in train only
+        if not val:
+            img = scene.frames[f_idx[0]].load_masked_image(c_idx)
+            mask = (img[:,:, 0] > 0) | (img[:,:,1] > 0) | (img[:,:,2] > 0)
+            ray_d = ray_d * mask[:, :, None]
 
         # Translate camera frame's origin to the world frame. It is the origin of all rays.
         ray_o = trafo.get_matrix()[:, -1, None, :3]
@@ -394,6 +405,15 @@ class Raysampler:
         ray_o = ray_o.expand(ray_d.shape)
         # Normalize ray directions
         ray_d = (1 / torch.norm(ray_d, dim=-1))[..., None] * ray_d
+        
+        # is_nan = torch.any(ray_d.isnan(),dim=2)
+        # ray_d = ray_d[~is_nan].reshape(1,-1,3)
+        # ray_o = ray_o[~is_nan].reshape(1,-1,3)
+        # print(ray_d.shape)
+        # print(new_xycf.shape)
+
+        # Set NaNs that occur after normalization and masking to 0
+        ray_d[ray_d != ray_d] = 0
 
         directions.append(ray_d)
         origins.append(ray_o)
