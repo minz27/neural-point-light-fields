@@ -53,6 +53,7 @@ class Raysampler:
         self._reference_frame = reference_frame
 
         self.additional_ray_information = additional_ray_information
+        self.mask = exp_dict.get('mask', False)
 
     @torch.no_grad()
     def get_intersections_only(self, ray_bundle, scene, fi, ci, faster=False, save_intersections=False):
@@ -389,7 +390,7 @@ class Raysampler:
             -1,
         )
         # Mask ray directions in train only
-        if not val:
+        if (self.mask) and (not val):
             img = scene.frames[f_idx[0]].load_masked_image(c_idx)
             mask = (img[:,:, 0] > 0) | (img[:,:,1] > 0) | (img[:,:,2] > 0)
             ray_d = ray_d * mask[:, :, None]

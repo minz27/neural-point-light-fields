@@ -66,6 +66,7 @@ EXP_GROUPS['pointLF_waymo_local'] = hu.cartesian_exp_group({
     "lrate": [0.001, ],
     "lrate_decay": 250,
     "netchunk": 65536,
+    'mask': False,
     'lightfield': {'k_closest': 4,
                    'n_features': 128,
                    # 'n_sample_pts': 20000,

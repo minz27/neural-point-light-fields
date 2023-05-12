@@ -35,7 +35,8 @@ def trainval(exp_dict, savedir, args):
     torch.cuda.manual_seed_all(seed)
 
     model_state_dict = None
-
+    # Ensure consistency between hyperparameters and args
+    args.mask = exp_dict.get('mask', False)
     render_epi = False
     if render_epi:
         exp_dict_pth = '/home/julian/workspace/NeuralSceneGraphs/model_library/scene_0_2/exp_dict.json'

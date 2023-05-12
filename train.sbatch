@@ -8,4 +8,4 @@
 #SBATCH --mail-type=ALL
 #SBATCH --output=/storage/slurm/logs/slurm-%j.out
 #SBATCH --error=/storage/slurm/logs/slurm-%j.out
-python trainval.py -e pointLF_waymo_local -sb ~/storage/user/output -d ~/storage/user/data/ --epoch_size 100 --num_workers 4 --mask True --ngpus 8
+python trainval.py -e pointLF_waymo_local -sb ~/storage/user/output -d ~/storage/user/data/ --epoch_size 100 --num_workers 4 --mask False --ngpus 8

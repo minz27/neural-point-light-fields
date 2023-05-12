@@ -14,8 +14,10 @@ from copy import deepcopy
 import cv2
 import open3d as o3d
 import pandas as pd
-from typing import List
+from typing import List, Dict
 from PIL import Image
+import open3d as o3d
+from pathlib import Path
 
 def extract_object_labels(datadirs:List[str], saving_dir:str):
     for file_num,file in enumerate(datadirs):
@@ -58,58 +60,7 @@ def extract_object_labels(datadirs:List[str], saving_dir:str):
         df = df.drop(['sorter', 'frame_value'], axis = 1)
         csv_file_name = os.path.join(saving_dir, file_name,'custom_label.csv')
         df.to_csv(csv_file_name, index=False)    
-  
-def normalize8(I):
-  mn = I.min()
-  mx = I.max()
-
-  mx -= mn
-
-  I = ((I - mn)/mx) * 255
-  return I.astype(np.uint8)
-
-def extract_depth_maps(datadirs:List[str], saving_dir:str):
-    for file_num,file in enumerate(datadirs):
-        file_name = file.split('/')[-1].split('.')[0]
-        if not os.path.isdir(os.path.join(saving_dir,file_name, 'depth_images')):   os.mkdir(os.path.join(saving_dir,file_name, 'depth_images'))
-        print("Procesing %s"%file_name)
-        dataset = tf.data.TFRecordDataset(file, compression_type='')
-        for f_num, data in enumerate(tqdm(dataset)):
-            frame = open_dataset.Frame()
-            frame.ParseFromString(bytearray(data.numpy()))
-            (range_images, camera_projections, range_image_top_pose) = \
-                frame_utils.parse_range_image_and_camera_projection(frame)
-            range_image_cartesian = frame_utils.convert_range_image_to_cartesian(frame,
-                                     range_images,
-                                     range_image_top_pose,
-                                     ri_index=0,
-                                     keep_polar_features=False)                             
-            for im in frame.images:
-                camera_name = open_dataset.CameraName.Name.Name(im.name)
-                depth_path = os.path.join(saving_dir,file_name, 'depth_images','%03d_%s.png'%(f_num,camera_name))
-                extrinsic = np.reshape(frame.context.camera_calibrations[im.name-1].extrinsic.transform, [1,4,4]).astype(np.float32)
-                camera_image_size = (frame.context.camera_calibrations[im.name-1].height, frame.context.camera_calibrations[im.name-1].width)
-                
-                ric_shape = range_image_cartesian[im.name].shape
-                ric = np.reshape(range_image_cartesian[im.name], [1, ric_shape[0], ric_shape[1], ric_shape[2]])
-                # print(camera_projections)
-                # cp_shape = camera_projections[im.name].shape
-                # cp = np.reshape(camera_projections[im.name], [1, cp_shape[0], cp_shape[1], cp_shape[2]])
-                cp = camera_projections[im.name][0]
-                cp_tensor = tf.reshape(tf.convert_to_tensor(value=cp.data), cp.shape.dims)
-                cp_shape = cp_tensor.shape
-                cp_tensor = np.reshape(cp_tensor, [1, cp_shape[0], cp_shape[1], cp_shape[2]])
-                depth_image = range_image_utils.build_camera_depth_image(ric,
-                             extrinsic,
-                             cp_tensor,
-                             camera_image_size,
-                             im.name)
-                depth_shape = depth_image.shape
-                depth_image = np.reshape(depth_image, [depth_shape[1], depth_shape[2]])
-                depth_image = normalize8(depth_image) 
-                        
-                imageio.imwrite(depth_path, depth_image, compress_level=3)          
-
+            
 def mask_images(datadirs:List[str]):
     raw_img_dir = os.path.join(datadirs, "images")
     masked_img_dir = os.path.join(datadirs, 'masked_images')
@@ -130,7 +81,73 @@ def mask_images(datadirs:List[str]):
             if row['motionFlagBool'] == 1:
                 img_np[int(row['ymin']):int(row['ymax']), int(row['xmin']):int(row['xmax'])] = 0
         imageio.imwrite(masked_img_path, img_np, compress_level=3)
-                            
+
+def depth_read(filename:str)->np.array:
+    # loads depth map D from png file
+    # and returns it as a numpy array
+
+    depth_png = np.array(Image.open(filename), dtype=int)
+    assert(np.max(depth_png) > 255)
+    depth = depth_png.astype(float) / 256.    
+    depth[depth_png == 0] = -1.
+    return depth
+
+def read_calib_file(filepath:str)->Dict:
+    """Read in a calibration file and parse into a dictionary."""
+    data = {}
+
+    with open(filepath, 'r') as f:
+        for line in f.readlines():
+            key, value = line.split(':', 1)
+            # The only non-float values in these files are dates, which
+            # we don't care about anyway
+            try:
+                data[key] = np.array([float(x) for x in value.split()])
+            except ValueError:
+                pass
+
+    return data
+
+def project_depth_map(depth_map:np.array, P:np.array)->o3d.geometry.PointCloud():
+    height, width = depth_map.shape
+    jj = np.tile(range(width), height)
+    ii = np.repeat(range(height), width)
+    xx = (jj - P[0,2])/P[0,0]
+    yy = (ii - P[1,2])/P[1,1]
+    length = height*width
+    z = depth_map.reshape(length)
+    pcd = np.dstack((xx * z, yy * z, z)).reshape((length, 3))
+    pcd_o3d = o3d.geometry.PointCloud()  # create a point cloud object
+    pcd_o3d.points = o3d.utility.Vector3dVector(pcd)
+    return pcd_o3d
+
+def extract_point_clouds(datadir:Path)->None:
+    depth_dir = datadir / 'image_03'
+    pcl_dir = datadir / 'point_cloud'
+    if not os.path.isdir(pcl_dir): os.mkdir(pcl_dir)        
+
+    calib = read_calib_file(Path(datadir) / 'calib_cam_to_cam.txt')
+    projection_matrix = calib['P_rect_03'].reshape(3,4)       
+    P = calib['K_03'].reshape(3,3)
+    R_z_180 = np.array([[-1, 0, 0], [0, -1, 0], [0, 0, 1]]) # rotation matrix for 180 degrees around z-axis
+    R_x_90 = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]]) # rotation matrix for 90 degrees around x-axis
+    R_y_90 = np.array([[0, 0, 1], [0, 1, 0], [-1, 0, 0]]) # rotation matrix for 90 degrees around y-axis
+    T = calib['T_03']
+
+    depth_images = depth_dir.glob('*.png') 
+    for fpath in depth_images:
+        depth_map = depth_read(fpath)
+        frame_name = fpath.stem
+        pcd_o3d = project_depth_map(depth_map, P)
+
+        # Convert to Waymo coordinates
+        pcd_o3d = pcd_o3d.rotate(R_z_180, center=(0, 0, 0))
+        pcd_o3d = pcd_o3d.rotate(R_y_90, center=(0, 0, 0))
+        pcd_o3d = pcd_o3d.rotate(R_x_90, center=(0, 0, 0))     
+        pcd_o3d = pcd_o3d.translate(T)
+
+        #Save point clouds
+        o3d.io.write_point_cloud(str(pcl_dir / f"{frame_name}.ply"), pcd_o3d)       
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
@@ -139,19 +156,13 @@ if __name__=='__main__':
     args,_ = parser.parse_known_args()
     datadirs = args.datadir
     saving_dir = '/'.join(datadirs.split('/')[:-1])
-    if '.tfrecord' not in datadirs:
-        saving_dir = 1*datadirs
-        datadirs = glob.glob(datadirs+'/*.tfrecord',recursive=True)
-        datadirs = sorted([f for f in datadirs if '.tfrecord' in f])
-        MULTIPLE_DIRS = True
 
-    if not isinstance(datadirs,list):   datadirs = [datadirs]
-    if not os.path.isdir(saving_dir):   os.mkdir(saving_dir)
+    # if not isinstance(datadirs,list):   datadirs = [datadirs]
+    # if not os.path.isdir(saving_dir):   os.mkdir(saving_dir)
     task = args.task
     if task == 'labels':
         extract_object_labels(datadirs, saving_dir)
-    elif task == 'depth':
-        extract_depth_maps(datadirs)    
+    elif task == 'pcl':
+        extract_point_clouds(Path(args.datadir))    
     elif task == 'mask':
-        # Pass the path of the scene directly here, will mask per scene for now
         mask_images(args.datadir)    
